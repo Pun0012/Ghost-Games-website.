@@ -1,0 +1,295 @@
+<title>ผีนางรำ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one full-bleed 3D stage. Overlays are square-edged placards (like temple signage) anchored to the left and bottom, so the house stays visible behind them.
+   Single committed look: dark teak, candle amber, pale jade for the ghost. */
+:root{
+  --ink:#0a0806; --teak:#1f130b; --teak-hi:#3b2415; --paper:#eadfc6; --paper-dim:#a99b7e;
+  --candle:#f0a947; --candle-dim:#8a5d24; --jade:#9bd8c6; --blood:#b3261e;
+  --display:'Chonburi','Sarabun','Noto Serif Thai',serif;
+  --body:'Sarabun','Noto Sans Thai',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.5;overflow:hidden;-webkit-tap-highlight-color:transparent}
+#stage{position:relative;width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--ink)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ov{position:absolute;inset:0;display:flex}
+.lbl{font-size:.72rem;letter-spacing:.08em;color:var(--paper-dim);text-transform:uppercase}
+kbd{display:inline-block;min-width:1.7em;padding:0 .4em;margin-right:.5em;border:1px solid var(--candle);color:var(--candle);font:600 .85rem var(--body);text-align:center}
+
+.btn{font:inherit;color:var(--paper);background:rgba(10,8,6,.62);border:1px solid var(--candle-dim);padding:.65rem 1.2rem;min-height:44px;cursor:pointer;letter-spacing:.02em;transition:background .15s,color .15s,border-color .15s}
+.btn:hover,.btn:focus-visible{background:var(--candle);color:var(--ink);border-color:var(--candle);outline:none}
+.btn:focus-visible{outline:2px solid var(--paper);outline-offset:2px}
+.btn.main{font-family:var(--display);font-size:1.3rem;padding:.85rem 1.8rem;border-color:var(--candle)}
+.btn.sm{padding:.3rem .75rem;min-height:36px;font-size:.9rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.on{background:var(--candle);color:var(--ink);border-color:var(--candle)}
+input[type=text]{font:inherit;color:var(--paper);background:rgba(10,8,6,.75);border:1px solid var(--candle-dim);padding:.55rem .8rem;min-height:44px;width:100%;letter-spacing:.04em}
+input[type=text]:focus{outline:2px solid var(--candle);outline-offset:1px}
+
+/* loading */
+#loading{background:radial-gradient(ellipse at 50% 60%,#241509 0%,var(--ink) 70%);align-items:center;justify-content:center;flex-direction:column;gap:1.1rem;text-align:center;z-index:50;transition:opacity .8s}
+#loading.out{opacity:0;pointer-events:none}
+.candle{position:relative;width:26px;height:110px;background:linear-gradient(90deg,#c9b88f,#efe3c3 45%,#b3a27a);border-radius:2px 2px 0 0;margin-top:34px}
+.candle::before{content:"";position:absolute;left:50%;top:-34px;width:16px;height:34px;margin-left:-8px;border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:radial-gradient(ellipse at 50% 75%,#fff4c4 0%,#ffbf54 45%,rgba(255,120,30,.0) 75%);box-shadow:0 0 38px 14px rgba(240,169,71,.38);animation:flame .22s infinite alternate}
+.candle::after{content:"";position:absolute;left:50%;top:-4px;width:2px;height:6px;margin-left:-1px;background:#2a1a10}
+@keyframes flame{from{transform:scale(1,.92) skewX(-3deg);opacity:.92}to{transform:scale(.94,1.08) skewX(3deg);opacity:1}}
+#loading h2{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0;letter-spacing:.04em}
+.bar{width:min(260px,70vw);height:3px;background:rgba(240,169,71,.18)}
+.bar>i{display:block;height:100%;width:0;background:var(--candle);transition:width .3s}
+#loadStep{margin:0;color:var(--paper-dim);font-size:.9rem;min-height:1.4em}
+#loadTip{margin:1.2rem 0 0;max-width:34ch;color:var(--paper-dim);font-size:.85rem;font-weight:300}
+
+/* menu */
+#menu{z-index:40;align-items:flex-end;background:linear-gradient(90deg,rgba(10,8,6,.93) 0%,rgba(10,8,6,.62) 48%,rgba(10,8,6,.05) 100%)}
+.menu-inner{padding-block:max(24px,env(safe-area-inset-bottom,0px)) 32px;width:min(560px,100%);display:flex;flex-direction:column;gap:.9rem;max-height:100%;overflow:auto}
+.kicker{margin:0;color:var(--candle);font-size:.85rem;letter-spacing:.06em}
+.title{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(3.6rem,15vw,7.4rem);line-height:1.05;text-shadow:0 0 28px rgba(240,169,71,.35);animation:flick 5s infinite}
+@keyframes flick{0%,100%{opacity:1}46%{opacity:1}48%{opacity:.78}50%{opacity:1}52%{opacity:.86}54%{opacity:1}}
+.lede{margin:0;max-width:44ch;color:var(--paper);font-weight:300}
+.nickrow{display:flex;flex-direction:column;gap:.3rem;max-width:300px}
+.menu-btns{display:flex;flex-wrap:wrap;gap:.6rem}
+.menu-btns .main{flex:1 1 100%}
+.warn{margin:0;color:var(--paper-dim);font-size:.85rem}
+#netNote{margin:0;font-size:.85rem;color:var(--jade)}
+
+/* panels */
+.center{align-items:center;justify-content:center;background:rgba(10,8,6,.78);z-index:60}
+.panel{width:min(520px,100%);max-height:92%;overflow:auto;background:var(--teak);border:1px solid var(--candle-dim);padding:1.4rem 1.4rem 1.2rem;display:flex;flex-direction:column;gap:.8rem}
+.panel h2{margin:0;font-family:var(--display);font-weight:400;font-size:1.6rem}
+.panel p{margin:0}
+.panel ul{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.row{display:flex;flex-wrap:wrap;gap:.6rem}
+.err{color:#ff8a7a;min-height:1.4em;font-size:.9rem}
+.codebig{font:600 2.6rem/1 'Courier New',monospace;letter-spacing:.2em;color:var(--candle);padding:.4rem 0}
+.plist{list-style:none;padding:0!important;margin:0;display:flex;flex-direction:column;gap:.4rem}
+.plist li{display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;border:1px solid rgba(240,169,71,.25);background:rgba(0,0,0,.25)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.tag{margin-left:auto;font-size:.75rem;color:var(--paper-dim)}
+.leaf{background:linear-gradient(180deg,#d7c58f,#c4af73);color:#2a1a0a;border:1px solid #6b4a1c;padding:1.2rem 1.4rem;font-size:1.15rem;line-height:1.9;display:flex;flex-direction:column;gap:.3rem;background-image:repeating-linear-gradient(90deg,rgba(90,60,20,.07) 0 2px,transparent 2px 7px)}
+.leaf h3{margin:0 0 .3rem;font-family:var(--display);font-weight:400;font-size:1.2rem;color:#5a2a10}
+.leaf p{margin:0}
+.leaf.empty{opacity:.55;font-style:italic}
+
+/* hud */
+#hud{z-index:20;flex-direction:column;justify-content:space-between;pointer-events:none;padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
+#hud button{pointer-events:auto}
+.hud-top{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.obj{max-width:min(36ch,56vw);display:flex;flex-direction:column;gap:.1rem;text-shadow:0 1px 6px #000}
+.obj p{margin:0;font-size:.95rem}
+.hud-right{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+.slots{display:flex;gap:.35rem}
+.slots i{font-style:normal;width:30px;height:30px;border:1px solid var(--candle-dim);background:rgba(10,8,6,.55);display:grid;place-items:center;font-size:.9rem;color:var(--paper-dim);transition:all .25s}
+.slots i.lit{background:var(--candle);color:var(--ink);border-color:var(--candle);box-shadow:0 0 12px rgba(240,169,71,.6)}
+.slots.bad i{border-color:var(--blood);background:rgba(179,38,30,.4)}
+.hud-btns{display:flex;gap:.4rem}
+#roster{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:calc(max(12px,env(safe-area-inset-top,0px)) + 7.4rem);display:flex;flex-direction:column;gap:.25rem;font-size:.85rem;text-shadow:0 1px 6px #000}
+#roster div{display:flex;align-items:center;gap:.45rem}
+.hud-bottom{display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center}
+#sub{margin:0;max-width:min(60ch,92vw);padding:.4rem .9rem;background:rgba(10,8,6,.7);font-size:1rem;opacity:0;transition:opacity .4s;min-height:0}
+#sub.on{opacity:1}
+#prompt{padding:.35rem .9rem;background:rgba(10,8,6,.75);border:1px solid var(--candle-dim);font-size:1rem}
+#chatq{display:flex;gap:.35rem;flex-wrap:wrap;justify-content:center;pointer-events:auto}
+#chatq .btn{min-height:32px;padding:.15rem .6rem;font-size:.8rem}
+#ghostArrow{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+#ghostArrow i{position:absolute;left:-14px;top:-150px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:26px solid var(--blood);filter:drop-shadow(0 0 6px #000)}
+
+/* effects */
+#fxVig{position:absolute;inset:0;pointer-events:none;z-index:10;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 45%,rgba(0,0,0,.85) 100%);opacity:.35}
+#fxRed{position:absolute;inset:0;pointer-events:none;z-index:11;background:radial-gradient(ellipse at 50% 50%,rgba(120,0,0,0) 30%,rgba(150,10,10,.8) 100%);opacity:0}
+#fxFade{position:absolute;inset:0;pointer-events:none;z-index:70;background:#000;opacity:1;transition:opacity 1.2s}
+
+/* touch */
+#touch{z-index:25;pointer-events:none}
+#joyBase{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border:1px solid rgba(240,169,71,.5);border-radius:50%;background:rgba(10,8,6,.3);display:none}
+#joyKnob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(240,169,71,.55)}
+#btnAct{position:absolute;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 56px);width:78px;height:78px;border-radius:50%;pointer-events:auto;font-family:var(--display);font-size:1.1rem;padding:0}
+#btnRun{position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));pointer-events:auto;min-width:64px}
+
+/* admin: floating, draggable window */
+#admFab{position:absolute;z-index:66;right:max(12px,env(safe-area-inset-right,0px));top:44%;min-width:44px;padding:.4rem .7rem;font-size:.8rem;letter-spacing:.1em;border-color:var(--candle)}
+#admWin{position:absolute;z-index:67;width:min(470px,calc(100% - 24px));max-height:min(86%,700px);display:flex;flex-direction:column;background:rgba(15,10,6,.97);border:1px solid var(--candle);box-shadow:0 10px 36px rgba(0,0,0,.7);left:12px;top:90px}
+#admBar{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.35rem .5rem .35rem .8rem;background:var(--teak-hi);cursor:grab;touch-action:none;user-select:none}
+#admBar.drag{cursor:grabbing}
+#admTitle{font-family:var(--display);color:var(--candle);letter-spacing:.06em}
+.admBtns{display:flex;gap:.3rem}
+.admBtns button{width:34px;height:34px;font:inherit;color:var(--paper);background:rgba(10,8,6,.6);border:1px solid var(--candle-dim);cursor:pointer}
+.admBtns button:hover,.admBtns button:focus-visible{background:var(--candle);color:var(--ink);outline:none}
+#admWin.min #admTabs,#admWin.min #admBody{display:none}
+#admTabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--candle-dim);flex:none}
+#admTabs button{flex:1 0 auto;font:inherit;font-size:.85rem;color:var(--paper-dim);background:transparent;border:0;border-bottom:2px solid transparent;padding:.55rem .8rem;min-height:40px;cursor:pointer;white-space:nowrap}
+#admTabs button[aria-selected=true]{color:var(--candle);border-bottom-color:var(--candle);background:rgba(240,169,71,.08)}
+#admTabs button:hover{color:var(--paper)}
+#admBody{padding:.8rem;overflow:auto;display:flex;flex-direction:column;gap:.6rem;min-height:0}
+#admBody h3{margin:.3rem 0 0;font-size:.75rem;letter-spacing:.08em;color:var(--paper-dim);font-weight:600}
+#admBody .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:.4rem}
+#admWin.max{width:calc(100% - 16px)!important;height:calc(100% - 16px);max-height:none;left:8px!important;top:8px!important}
+#admWin.max #admBody{flex:1}
+#admWin.max #admLog{height:min(52vh,420px)}
+#admBody .btn{min-height:38px;padding:.3rem .5rem;font-size:.88rem}
+#admBody p{margin:0;font-size:.9rem}
+#admLog{background:#050403;border:1px solid rgba(240,169,71,.25);font:.8rem/1.45 'Courier New',monospace;padding:.5rem;height:170px;overflow:auto;white-space:pre-wrap;word-break:break-word;color:#cfc4a6;user-select:text}
+#admLog .in{color:var(--candle)}#admLog .er{color:#ff8a7a}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.chips .btn{min-height:30px;padding:.15rem .55rem;font-size:.78rem}
+#inv{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.25rem;max-width:min(36ch,56vw)}
+.chip{font-size:.75rem;padding:.05rem .5rem;border:1px solid var(--candle-dim);background:rgba(10,8,6,.7);color:var(--candle)}
+.dig{font:600 2rem/1 'Courier New',monospace;color:var(--candle);min-width:1.4em;text-align:center}
+.dcol{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.offers{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.pdots{display:flex;gap:.4rem;justify-content:center}
+.pdots i{width:14px;height:14px;border:1px solid var(--candle);transform:rotate(45deg)}
+.pdots i.on{background:var(--candle)}
+
+#over,#win{z-index:62}
+#over .panel{border-color:var(--blood)}
+#over h2{color:#ff8a7a}
+#pause{z-index:61}
+#fxHint{position:absolute;inset:auto 0 0 0}
+@media (orientation:landscape) and (max-height:560px){
+  .panel{padding:.8rem 1rem;gap:.5rem;max-height:96%}.panel h2{font-size:1.25rem}
+  .btn{min-height:38px;padding:.4rem .9rem}.btn.main{font-size:1.1rem;padding:.55rem 1.2rem}
+  #admWin{top:6px!important;max-height:calc(100% - 12px);width:min(440px,58%)}
+  #admFab{top:30%}
+  #admLog{height:90px}
+  #inv{max-width:40vw}
+  #roster{top:6.6rem}
+  .menu-inner{padding-block:10px;gap:.45rem}.title{font-size:2.8rem}.lede,.warn{display:none}.kicker{font-size:.75rem}
+  .nickrow{flex-direction:row;align-items:center;max-width:none}.nickrow input{max-width:200px;min-height:36px}
+}
+@media (max-width:520px){.panel{padding:1.1rem}.codebig{font-size:2.1rem}}
+@media (prefers-reduced-motion:reduce){.title,.candle::before{animation:none}}
+</style>
+
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="fxVig"></div><div id="fxRed"></div>
+
+  <section id="hud" class="ov gut" hidden>
+    <div class="hud-top">
+      <div class="obj"><span class="lbl">เป้าหมาย</span><p id="objText"></p><div id="inv"></div></div>
+      <div class="hud-right">
+        <div><span class="lbl">ลำดับเสียง</span><div class="slots" id="slots"><i>๑</i><i>๒</i><i>๓</i><i>๔</i></div></div>
+        <div class="hud-btns">
+          <button class="btn sm" id="btnJournal" type="button">ใบลาน <b id="scCount">๐/๔</b></button>
+        </div>
+      </div>
+    </div>
+    <div id="roster"></div>
+    <div id="ghostArrow" hidden><i></i></div>
+    <div class="hud-bottom">
+      <p id="sub"></p>
+      <div id="prompt" hidden></div>
+      <div id="chatq" hidden></div>
+    </div>
+  </section>
+
+  <section id="touch" class="ov" hidden>
+    <div id="joyBase"><div id="joyKnob"></div></div>
+    <button class="btn" id="btnAct" type="button" hidden>แตะ</button>
+    <button class="btn sm" id="btnRun" type="button">วิ่ง</button>
+  </section>
+
+  <section id="loading" class="ov gut">
+    <div class="candle"></div>
+    <h2>กำลังจุดตะเกียง</h2>
+    <div class="bar"><i id="loadBar"></i></div>
+    <p id="loadStep">เตรียมเรือน…</p>
+    <p id="loadTip"></p>
+  </section>
+
+  <section id="menu" class="ov gut" hidden>
+    <div class="menu-inner">
+      <p class="kicker">เกมสยองขวัญ · เรือนไทย · ปริศนาเครื่องดนตรี</p>
+      <h1 class="title">ผีนางรำ</h1>
+      <p class="lede">คุณตื่นขึ้นกลางเรือนไทยหลังเก่า ใบลานสี่ใบ เครื่องดนตรีสี่ชิ้น และนางรำที่ไม่ยอมให้ใครออกไป</p>
+      <div class="nickrow"><label class="lbl" for="nick">ชื่อของคุณ</label><input type="text" id="nick" maxlength="12" autocomplete="off" spellcheck="false"></div>
+      <div class="menu-btns">
+        <button class="btn main" id="btnSolo" type="button">เล่นคนเดียว</button>
+        <button class="btn" id="btnCreate" type="button">สร้างห้อง</button>
+        <button class="btn" id="btnJoin" type="button">เข้าร่วมห้อง</button>
+        <button class="btn" id="btnHow" type="button">วิธีเล่น</button>
+        <button class="btn" id="btnSound" type="button">เสียง: เปิด</button>
+        <button class="btn" id="btnFull" type="button">เต็มจอ / แนวนอน</button>
+      </div>
+      <p id="netNote"></p>
+      <p class="warn">มีเสียงตกใจดังฉับพลัน ควรใส่หูฟังและเล่นในที่เงียบ</p>
+    </div>
+  </section>
+
+  <section id="joinBox" class="ov center gut" hidden>
+    <div class="panel">
+      <h2>เข้าร่วมห้อง</h2>
+      <p>ใส่รหัสห้อง ๕ ตัวอักษรที่เพื่อนส่งให้</p>
+      <label class="lbl" for="codeIn">รหัสห้อง</label>
+      <input type="text" id="codeIn" maxlength="5" autocomplete="off" spellcheck="false" autocapitalize="characters">
+      <p class="err" id="joinErr"></p>
+      <div class="row"><button class="btn" id="btnJoinGo" type="button">เข้าร่วม</button><button class="btn" id="btnJoinCancel" type="button">ยกเลิก</button></div>
+    </div>
+  </section>
+
+  <section id="lobby" class="ov center gut" hidden>
+    <div class="panel">
+      <h2>ห้องรอผู้เล่น</h2>
+      <p>ส่งรหัสนี้ให้เพื่อน แล้วให้เพื่อนเปิดหน้าเกมนี้ กด “เข้าร่วมห้อง” (เล่นได้สูงสุด ๔ คน)</p>
+      <div class="row" style="align-items:center"><span class="codebig" id="lobbyCode">-----</span><button class="btn sm" id="btnCopy" type="button">คัดลอก</button></div>
+      <ul class="plist" id="lobbyList"></ul>
+      <p class="err" id="lobbyMsg"></p>
+      <div class="row"><button class="btn main" id="btnGo" type="button">เริ่มเกม</button><button class="btn" id="btnLeave" type="button">ออกจากห้อง</button></div>
+    </div>
+  </section>
+
+  <section id="howto" class="ov center gut" hidden>
+    <div class="panel">
+      <h2>วิธีเล่น</h2>
+      <ul>
+        <li>ค้นหา <b>ใบลาน ๔ ใบ</b> ในเรือนและบนชาน แต่ละใบบอกใบ้ถึงเครื่องดนตรีหนึ่งชิ้น เรียงตามลำดับบทที่ ๑ ถึง ๔</li>
+        <li>บรรเลงเครื่องดนตรีให้ตรงลำดับ ผิดเมื่อไรนางรำจะโกรธและลำดับเริ่มใหม่</li>
+        <li>นางรำจะโผล่มาหลอกตลอด ถ้ามองเธออยู่เธอจะขยับช้าลง อย่าให้เธอเข้าใกล้เกิน ๑ เมตร</li>
+        <li>ไขปริศนาในเรือนแล้ว หมอกที่บันไดจะสลาย ลงไปสำรวจ <b>ลานบ้าน</b>: เรือนครัว ยุ้งข้าว บ่อน้ำ ศาลพระภูมิ</li>
+        <li>เก็บของที่ได้ไว้ในคลังร่วมของทีม ไขรหัสยุ้งข้าว หาคันโยกหมุนรอก ถวายเครื่องบูชาให้ถูกลำดับ แล้วเปิดประตูรั้วออกไป</li>
+        <li>นางรำจะตามหลอกไปจนกว่าคุณจะออกจากประตูรั้ว</li>
+      </ul>
+      <p class="lbl">คอมพิวเตอร์</p>
+      <ul>
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> เดิน · <kbd>Shift</kbd> วิ่ง · เมาส์ หมุนมอง (คลิกที่จอเพื่อล็อกเมาส์ หรือลากเมาส์)</li>
+        <li><kbd>E</kbd> ใช้/ตี/เก็บ · <kbd>J</kbd> ใบลาน · <kbd>1</kbd>–<kbd>4</kbd> พูดในห้อง · <kbd>F2</kbd> เมนูแอดมินแบบลอย</li>
+      </ul>
+      <p class="lbl">มือถือ</p>
+      <ul><li>แตะค้างฝั่งซ้ายเพื่อเดิน · ลากฝั่งขวาเพื่อมอง · ปุ่ม “แตะ” เพื่อใช้ของ</li></ul>
+      <div class="row"><button class="btn" id="btnHowClose" type="button">ปิด</button></div>
+    </div>
+  </section>
+
+  <section id="scrollModal" class="ov center gut" hidden>
+    <div class="panel" id="scrollBody"></div>
+  </section>
+
+  <section id="pause" class="ov center gut" hidden>
+    <div class="panel"><h2>หยุดเกมชั่วคราว</h2><p>คลิกเพื่อกลับเข้าเรือน</p><div class="row"><button class="btn main" id="btnResume" type="button">เล่นต่อ</button></div></div>
+  </section>
+
+  <section id="over" class="ov center gut" hidden>
+    <div class="panel"><h2>นางรำจับคุณได้</h2><p>เสียงกระพรวนดังขึ้นอีกครั้ง… ลองใหม่อีกครั้งไหม</p><div class="row"><button class="btn main" id="btnRetry" type="button">ลองอีกครั้ง</button><button class="btn" id="btnOverMenu" type="button">กลับเมนู</button></div></div>
+  </section>
+
+  <section id="win" class="ov center gut" hidden>
+    <div class="panel"><h2>รุ่งอรุณ</h2><p>เสียงดนตรีส่งนางรำไปสู่ภพภูมิที่เธอจากมา คุณก้าวพ้นบันไดเรือนพร้อมแสงแรกของวัน</p><div class="row"><button class="btn main" id="btnWinMenu" type="button">กลับเมนู</button></div></div>
+  </section>
+
+  <button class="btn" id="admFab" type="button" hidden aria-label="เปิดเมนูแอดมิน">ADMIN</button>
+  <div id="admWin" hidden role="dialog" aria-label="เมนูแอดมิน">
+    <div id="admBar"><span id="admTitle">ADMIN</span><div class="admBtns"><button id="admMin" type="button" aria-label="ย่อหน้าต่าง">–</button><button id="admMax" type="button" aria-label="ขยายหน้าต่าง">☐</button><button id="admClose" type="button" aria-label="ปิดหน้าต่าง">✕</button></div></div>
+    <div id="admTabs" role="tablist"></div>
+    <div id="admBody"></div>
+  </div>
+
+  <div id="fxFade"></div>
+</div>
